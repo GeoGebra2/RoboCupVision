@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 3
+names: ['ball', 'blue_bot', 'yellow_bot']
+
+roboflow:
+  workspace: robocup-4eb9g
+  project: robovision-fe01r
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/robocup-4eb9g/robovision-fe01r/dataset/1
