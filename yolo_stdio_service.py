@@ -37,16 +37,27 @@ def run_once(req):
         ensure_model(path)
         img = decode_image(req)
         if img is None:
+            sys.stderr.write(f"diag: model={path} img=None\n")
+            sys.stderr.flush()
             return []
         conf = float(req.get("conf", 0.25))
         iou = float(req.get("iou", 0.5))
-        res = model(img, conf=conf, iou=iou)
+        try:
+            res = model(img, conf=conf, iou=iou)
+        except Exception as e:
+            sys.stderr.write(f"diag: model={path} img={img.shape[1]}x{img.shape[0]} conf={conf} iou={iou} error={str(e)}\n")
+            sys.stderr.flush()
+            return []
         r = res[0]
         out = []
         if hasattr(r, "boxes") and r.boxes is not None:
             xyxy = r.boxes.xyxy.cpu().numpy()
             clss = r.boxes.cls.cpu().numpy()
             confs = r.boxes.conf.cpu().numpy()
+            if xyxy.shape[0] == 0:
+                sys.stderr.write(f"diag: model={path} img={img.shape[1]}x{img.shape[0]} conf={conf} iou={iou} detections=0\n")
+                sys.stderr.flush()
+                return []
             for i in range(xyxy.shape[0]):
                 x1 = int(xyxy[i,0])
                 y1 = int(xyxy[i,1])
@@ -56,7 +67,9 @@ def run_once(req):
                 cls = int(clss[i])
                 out.append({"x1":x1,"y1":y1,"x2":x2,"y2":y2,"conf":c,"class_id":cls})
         return out
-    except Exception:
+    except Exception as e:
+        sys.stderr.write(f"diag: error={str(e)}\n")
+        sys.stderr.flush()
         return []
 def main():
     for line in sys.stdin:
